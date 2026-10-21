@@ -89,13 +89,21 @@ public sealed class UdpSocket : IAsyncDisposable
             byte[] buf = ArrayPool<byte>.Shared.Rent(2048);
             try
             {
-                int len = sock.ReceiveFrom(buf, ref remote);
-                if (len > 0)
+                // Async receive awaited synchronously on this dedicated thread.
+                // A synchronous Socket.ReceiveFrom cannot be interrupted by
+                // Socket.Dispose on Unix (the close blocks in
+                // SafeSocketHandle.CloseAsIs until the recv syscall returns, so
+                // DisposeAsync deadlocks). Cancelling the token aborts a pending
+                // async receive on every platform, letting the loop exit cleanly
+                // before the socket is torn down.
+                var result = sock.ReceiveFromAsync(buf.AsMemory(), SocketFlags.None, remote, ct)
+                                 .AsTask().GetAwaiter().GetResult();
+                if (result.ReceivedBytes > 0)
                 {
-                    // Copy endpoint — ReceiveFrom mutates the passed-in instance.
-                    var endpoint = new IPEndPoint(((IPEndPoint)remote).Address,
-                                                  ((IPEndPoint)remote).Port);
-                    _queue.Add(new RxPacket(buf, len, endpoint));
+                    // Copy endpoint — the result object is reused by the socket internals.
+                    var endpoint = new IPEndPoint(((IPEndPoint)result.RemoteEndPoint).Address,
+                                                  ((IPEndPoint)result.RemoteEndPoint).Port);
+                    _queue.Add(new RxPacket(buf, result.ReceivedBytes, endpoint));
                     continue; // ownership of buf transferred to dispatch thread
                 }
             }
