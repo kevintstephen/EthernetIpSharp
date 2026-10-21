@@ -8,3 +8,5 @@ obj/
 tools/
 settings.local.json
 artifacts/
+TestResults/
+*.trx
