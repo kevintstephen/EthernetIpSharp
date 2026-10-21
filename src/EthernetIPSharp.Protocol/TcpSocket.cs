@@ -46,11 +46,16 @@ public sealed class TcpSocket : IAsyncDisposable
         {
             try
             {
-                var client = _listener!.AcceptTcpClient();
+                // Async accept awaited synchronously: a synchronous
+                // AcceptTcpClient cannot be interrupted by TcpListener.Stop on
+                // Unix (the close blocks until the accept syscall returns), so
+                // the token is what lets this thread exit during teardown.
+                var client = _listener!.AcceptTcpClientAsync(ct).AsTask().GetAwaiter().GetResult();
                 var conn = new TcpSocketConnection(client, _cts.Token);
                 ClientConnected?.Invoke(conn);
                 conn.Start();
             }
+            catch (OperationCanceledException) { break; }
             catch (ObjectDisposedException) { break; }
             catch (SocketException) { /* listener was closed mid-accept */ break; }
         }
@@ -114,9 +119,13 @@ public sealed class TcpSocketConnection : IDisposable
             while (!_ct.IsCancellationRequested && !_disposed)
             {
                 int n;
-                try { n = _stream.Read(buf, 0, buf.Length); }
+                // Same teardown story as UdpSocket/TcpSocket: a synchronous
+                // Read cannot be interrupted on Unix, so cancellation of the
+                // pending async read is what unblocks this thread.
+                try { n = _stream.ReadAsync(buf.AsMemory(0, buf.Length), _ct).AsTask().GetAwaiter().GetResult(); }
                 catch (IOException) { break; }
                 catch (ObjectDisposedException) { break; }
+                catch (OperationCanceledException) { break; }
 
                 if (n == 0) break; // peer closed
                 try { BytesReceived?.Invoke(this, buf.AsMemory(0, n)); }
