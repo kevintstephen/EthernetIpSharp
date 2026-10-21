@@ -48,6 +48,31 @@ jobs:
       - name: Test
         run: dotnet test EthernetIPSharp.slnx --no-build -c Release --blame-hang --blame-hang-timeout 120s --logger trx
 
+      - name: Pack NuGet rollup
+        run: dotnet pack packaging/EthernetIPSharp.Nuget/EthernetIPSharp.Nuget.csproj --no-build -c Release
+
+      - name: Verify NuGet package contents
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/nuget/*.nupkg)
+          if [ "${#packages[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one .nupkg, found ${#packages[@]}"
+            exit 1
+          fi
+          lib_entries=$(unzip -Z1 "${packages[0]}" | grep '^lib/' | sort)
+          expected=$(for lib in Cip Connections Device Logix Protocol Safety; do
+            for ext in dll pdb xml; do
+              echo "lib/net10.0/EthernetIPSharp.$lib.$ext"
+            done
+          done | sort)
+          if [ "$lib_entries" != "$expected" ]; then
+            echo "::error::Unexpected lib/ contents in ${packages[0]}"
+            diff <(echo "$expected") <(echo "$lib_entries") || true
+            exit 1
+          fi
+          echo "${packages[0]}: $(echo "$lib_entries" | wc -l) lib/net10.0 entries OK"
+
       - name: Upload test results and hang dumps
         if: always()
         uses: actions/upload-artifact@v4
