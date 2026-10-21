@@ -1,5 +1,7 @@
 # EthernetIPSharp
 
+[![CI](https://github.com/kevintstephen/EthernetIpSharp/actions/workflows/ci.yml/badge.svg?branch=run-1)](https://github.com/kevintstephen/EthernetIpSharp/actions/workflows/ci.yml)
+
 A complete EtherNet/IP and CIP Safety protocol stack written in C# (.NET 8). Acts as **adapter** (target / I/O slave), **scanner** (originator / I/O master), or **Logix-compatible tag server / client** — with or without CIP Safety. Tested against real Allen-Bradley ControlLogix and CompactLogix PLCs as well as 1734 distributed safety I/O modules.
 
 The library is layered into independent projects so you can use only the parts you need: bring in `EthernetIPSharp.Cip` if you just want a CIP message router, add `EthernetIPSharp.Device` for I/O assemblies, layer on `EthernetIPSharp.Safety` if you need a SIL-3-style safety connection, or use `EthernetIPSharp.Logix` for symbolic tag access against a real PLC.

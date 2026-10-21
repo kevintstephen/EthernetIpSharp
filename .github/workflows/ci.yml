@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - 'run-*'
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build and test (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/packages.lock.json
+
+      - name: Restore
+        run: dotnet restore EthernetIPSharp.slnx
+
+      - name: Build
+        run: dotnet build EthernetIPSharp.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test EthernetIPSharp.slnx --no-build -c Release --blame-hang --blame-hang-timeout 120s --logger trx
+
+      - name: Upload test results and hang dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/**'
+          if-no-files-found: ignore
