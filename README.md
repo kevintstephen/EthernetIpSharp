@@ -1,6 +1,6 @@
 # EthernetIPSharp
 
-A complete EtherNet/IP and CIP Safety protocol stack written in C# (.NET 8). Acts as **adapter** (target / I/O slave), **scanner** (originator / I/O master), or **Logix-compatible tag server / client** — with or without CIP Safety. Tested against real Allen-Bradley ControlLogix and CompactLogix PLCs as well as 1734 distributed safety I/O modules.
+A complete EtherNet/IP and CIP Safety protocol stack written in C# (.NET 10). Acts as **adapter** (target / I/O slave), **scanner** (originator / I/O master), or **Logix-compatible tag server / client** — with or without CIP Safety. Tested against real Allen-Bradley ControlLogix and CompactLogix PLCs as well as 1734 distributed safety I/O modules.
 
 The library is layered into independent projects so you can use only the parts you need: bring in `EthernetIPSharp.Cip` if you just want a CIP message router, add `EthernetIPSharp.Device` for I/O assemblies, layer on `EthernetIPSharp.Safety` if you need a SIL-3-style safety connection, or use `EthernetIPSharp.Logix` for symbolic tag access against a real PLC.
 
@@ -414,7 +414,7 @@ dotnet test EthernetIPSharp.slnx
 dotnet test tests/EthernetIPSharp.Safety.Tests
 ```
 
-Requirements: .NET 8 SDK or newer.
+Requirements: .NET 10 SDK or newer.
 
 The test suite covers CIP path parsing, MR codec, encapsulation, scanner ↔ adapter loopback, tag read/write/browse, CRC check values, safety frame round-trips, and safety segment parsing.
 
