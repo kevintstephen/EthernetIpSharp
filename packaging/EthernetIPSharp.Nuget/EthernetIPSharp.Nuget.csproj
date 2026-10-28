@@ -9,11 +9,11 @@
        ProjectReference and instead let a dependency chain (Logix -> everything)
        via BuildProjectReferences=true drive the build. The DLLs then get
        harvested by an MSBuild target and injected into TfmSpecificPackageFile
-       so they land under lib/net8.0/ inside the .nupkg.
+       so they land under lib/net10.0/ inside the .nupkg.
   -->
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
@@ -28,7 +28,7 @@
     <Company>Cristian Mori</Company>
     <Copyright>Copyright 2026 Cristian Mori</Copyright>
     <Title>EthernetIPSharp — EtherNet/IP and CIP Safety for .NET</Title>
-    <Description>An EtherNet/IP and CIP Safety protocol stack for .NET 8: adapter (target), scanner (originator), and Logix-compatible tag client / server. Interop-tested against real Allen-Bradley ControlLogix and 1734 distributed safety I/O.</Description>
+    <Description>An EtherNet/IP and CIP Safety protocol stack for .NET 10: adapter (target), scanner (originator), and Logix-compatible tag client / server. Interop-tested against real Allen-Bradley ControlLogix and 1734 distributed safety I/O.</Description>
     <PackageTags>ethernet-ip;cip;cip-safety;allen-bradley;controllogix;compactlogix;logix;plc;industrial;automation</PackageTags>
 
     <!-- License, README, source link -->
@@ -73,11 +73,17 @@
          rollup with SuppressDependenciesWhenPacking=true.
     -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!--
+         When packing with NoBuild=true, ResolveProjectReferences would otherwise
+         invoke Build on the referenced libraries and fail with NETSDK1085.
+         Resolve their already-built outputs via GetTargetPath instead.
+    -->
+    <BuildProjectReferences Condition="'$(NoBuild)' == 'true'">false</BuildProjectReferences>
   </PropertyGroup>
 
   <!--
        For each ProjectReference, hand-pick the project's own DLL / PDB / XML
-       from its `bin/Release/net8.0/` and stage it under lib/net8.0/ in the
+       from its `bin/Release/net10.0/` and stage it under lib/net10.0/ in the
        .nupkg. Filtering by `%(Filename)` means we grab only the project's own
        output, not the transitively-copied dependencies (which the pack task
        would otherwise complain about as duplicates).

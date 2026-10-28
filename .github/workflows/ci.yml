@@ -20,9 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: |
             **/*.csproj
@@ -33,6 +31,19 @@ jobs:
 
       - name: Build
         run: dotnet build EthernetIPSharp.slnx --no-restore -c Release
+
+      - name: Build off-solution projects
+        run: |
+          for project in \
+            tests/ScannerRealPLC/ScannerRealPLC.csproj \
+            tests/SafetyScannerTest/SafetyScannerTest.csproj \
+            tests/LogixHost/LogixHost.csproj \
+            tests/ConnectedExplicitSmoke/ConnectedExplicitSmoke.csproj \
+            samples/CipEchoServer/CipEchoServer.csproj; do
+            echo "::group::$project"
+            dotnet build "$project" -c Release
+            echo "::endgroup::"
+          done
 
       - name: Test
         run: dotnet test EthernetIPSharp.slnx --no-build -c Release --blame-hang --blame-hang-timeout 120s --logger trx
